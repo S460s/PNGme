@@ -1,15 +1,14 @@
 use std::{fmt, str::FromStr};
 
 #[derive(Debug, PartialEq, Eq)]
-struct ChunkType {
-    chunk: [u8; 4],
-}
+struct ChunkType([u8; 4]);
 
 impl TryFrom<[u8; 4]> for ChunkType {
     type Error = &'static str;
 
     fn try_from(value: [u8; 4]) -> Result<Self, Self::Error> {
-        todo!()
+        // add some checks later
+        Ok(Self(value))
     }
 }
 
@@ -17,10 +16,19 @@ impl TryFrom<[u8; 4]> for ChunkType {
 struct ParseChunkError;
 
 impl FromStr for ChunkType {
-    type Err = ParseChunkError;
+    type Err = &'static str; //ParseChunkError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+        let bytes = s.as_bytes();
+
+        match bytes {
+            bytes if bytes.len() != 4 => Err("string length is not 4 bytes"),
+            bytes if !bytes.is_ascii() => Err("string contains non ascii characters"),
+            bytes => {
+                let array: [u8; 4] = bytes.try_into().unwrap();
+                Ok(Self(array))
+            }
+        }
     }
 }
 
@@ -32,7 +40,7 @@ impl fmt::Display for ChunkType {
 
 impl ChunkType {
     fn bytes(&self) -> [u8; 4] {
-        todo!()
+        self.0
     }
 
     fn is_valid(&self) -> bool {
