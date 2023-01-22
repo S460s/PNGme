@@ -21,15 +21,26 @@ impl FromStr for ChunkType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = s.as_bytes();
 
+        println!("{}", bytes.is_ascii());
+
         match bytes {
             bytes if bytes.len() != 4 => Err("string length is not 4 bytes"),
-            bytes if !bytes.is_ascii() => Err("string contains non ascii characters"),
+            bytes if !only_letters(bytes) => Err("string contains non ascii letter characters"),
             bytes => {
                 let array: [u8; 4] = bytes.try_into().unwrap();
                 Ok(Self(array))
             }
         }
     }
+}
+
+fn only_letters(bytes: &[u8]) -> bool {
+    for c in bytes {
+        if !(65..=90).contains(c) && !(97..=122).contains(c) {
+            return false;
+        }
+    }
+    true
 }
 
 impl fmt::Display for ChunkType {
@@ -44,23 +55,23 @@ impl ChunkType {
     }
 
     fn is_valid(&self) -> bool {
-        todo!()
+        self.0.is_ascii() && self.0[2].is_ascii_uppercase()
     }
 
     fn is_critical(&self) -> bool {
-        todo!()
+        self.0[0].is_ascii_uppercase()
     }
 
     fn is_public(&self) -> bool {
-        todo!()
+        self.0[1].is_ascii_uppercase()
     }
 
     fn is_reserved_bit_valid(&self) -> bool {
-        todo!()
+        self.0[2].is_ascii_uppercase()
     }
 
     fn is_safe_to_copy(&self) -> bool {
-        todo!()
+        self.0[3].is_ascii_lowercase()
     }
 }
 
@@ -76,6 +87,13 @@ mod tests {
         let actual = ChunkType::try_from([82, 117, 83, 116]).unwrap();
 
         assert_eq!(expected, actual.bytes());
+    }
+
+    // additional test
+    #[test]
+    #[should_panic]
+    pub fn test_chunk_type_from_bad_string() {
+        ChunkType::from_str("too_long").unwrap();
     }
 
     #[test]
@@ -145,6 +163,7 @@ mod tests {
         assert!(!chunk.is_valid());
 
         let chunk = ChunkType::from_str("Ru1t");
+        println!("{chunk:?}");
         assert!(chunk.is_err());
     }
 
