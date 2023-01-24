@@ -1,4 +1,7 @@
-use std::{fmt, str::FromStr};
+use std::{
+    fmt,
+    str::{from_utf8, FromStr},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 struct ChunkType([u8; 4]);
@@ -7,7 +10,6 @@ impl TryFrom<[u8; 4]> for ChunkType {
     type Error = &'static str;
 
     fn try_from(value: [u8; 4]) -> Result<Self, Self::Error> {
-        // add some checks later
         Ok(Self(value))
     }
 }
@@ -16,13 +18,11 @@ impl TryFrom<[u8; 4]> for ChunkType {
 struct ParseChunkError;
 
 impl FromStr for ChunkType {
+    // TODO: REFACTOR (Custom Error)
     type Err = &'static str; //ParseChunkError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = s.as_bytes();
-
-        println!("{}", bytes.is_ascii());
-
         match bytes {
             bytes if bytes.len() != 4 => Err("string length is not 4 bytes"),
             bytes if !only_letters(bytes) => Err("string contains non ascii letter characters"),
@@ -45,17 +45,20 @@ fn only_letters(bytes: &[u8]) -> bool {
 
 impl fmt::Display for ChunkType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+        write!(
+            f,
+            "{}",
+            from_utf8(&self.0).unwrap_or("Cannot convert utf8 to string")
+        )
     }
 }
-
 impl ChunkType {
     fn bytes(&self) -> [u8; 4] {
         self.0
     }
 
     fn is_valid(&self) -> bool {
-        self.0.is_ascii() && self.0[2].is_ascii_uppercase()
+        only_letters(&self.0) && self.is_reserved_bit_valid()
     }
 
     fn is_critical(&self) -> bool {
