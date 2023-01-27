@@ -1,8 +1,9 @@
 use std::fmt::Display;
+use std::slice::SliceIndex;
 
 use crc::{Crc, CRC_32_ISO_HDLC};
 
-use crate::chunk_type::ChunkType;
+use crate::chunk_type::{self, ChunkType};
 use crate::Result;
 
 struct Chunk {
@@ -69,7 +70,25 @@ impl Display for Chunk {
 impl TryFrom<&[u8]> for Chunk {
     type Error = &'static str;
     fn try_from(value: &[u8]) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        // add error handaling for invalid chunks
+        // check if crc is good for chunk
+
+        let (length_bytes, other) = value.split_at(4);
+        let length = u32::from_be_bytes(length_bytes.try_into().unwrap());
+
+        let (chunk_type_bytes, other) = other.split_at(4);
+        let chunk_type_bytes: [u8; 4] = chunk_type_bytes.try_into().unwrap();
+        let chunk_type = ChunkType::try_from(chunk_type_bytes).unwrap();
+
+        let (data, crc) = other.split_at(other.len() - 4);
+        let crc = u32::from_be_bytes(crc.try_into().unwrap());
+
+        Ok(Chunk {
+            length,
+            data: data.to_vec(),
+            crc,
+            chunk_type,
+        })
     }
 }
 
