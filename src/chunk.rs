@@ -13,12 +13,10 @@ struct Chunk {
     crc: u32,
 }
 
-impl Chunk {
-    fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
-        let length = data.len() as u32;
-        let crc_gen = Crc::<u32>::new(&CRC_32_ISO_HDLC);
+const CRC_GEN: Crc<u32> = Crc::<u32>::new(&CRC_32_ISO_HDLC);
 
-        // by chaining iterators I can add vectors together.
+impl Chunk {
+    fn calc_crc(chunk_type: &ChunkType, data: &Vec<u8>) -> u32 {
         let crc_data: Vec<u8> = chunk_type
             .bytes()
             .iter()
@@ -26,7 +24,12 @@ impl Chunk {
             .cloned()
             .collect();
 
-        let crc = crc_gen.checksum(&crc_data);
+        CRC_GEN.checksum(&crc_data)
+    }
+
+    fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
+        let length = data.len() as u32;
+        let crc = Chunk::calc_crc(&chunk_type, &data);
 
         Chunk {
             length,
@@ -41,7 +44,7 @@ impl Chunk {
     }
 
     fn chunk_type(&self) -> &ChunkType {
-        todo!()
+        &self.chunk_type
     }
 
     fn data(&self) -> &[u8] {
@@ -81,11 +84,16 @@ impl TryFrom<&[u8]> for Chunk {
         let chunk_type = ChunkType::try_from(chunk_type_bytes).unwrap();
 
         let (data, crc) = other.split_at(other.len() - 4);
+        let data = data.to_vec();
         let crc = u32::from_be_bytes(crc.try_into().unwrap());
+
+        if crc != Self::calc_crc(&chunk_type, &data) {
+            return Err("Invalid crc");
+        }
 
         Ok(Chunk {
             length,
-            data: data.to_vec(),
+            data,
             crc,
             chunk_type,
         })
