@@ -4,7 +4,7 @@ use std::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
-struct ChunkType([u8; 4]);
+pub struct ChunkType([u8; 4]);
 
 impl TryFrom<[u8; 4]> for ChunkType {
     type Error = &'static str;
@@ -25,22 +25,15 @@ impl FromStr for ChunkType {
         let bytes = s.as_bytes();
         match bytes {
             bytes if bytes.len() != 4 => Err("string length is not 4 bytes"),
-            bytes if !only_letters(bytes) => Err("string contains non ascii letter characters"),
+            bytes if !ChunkType::only_letters(bytes) => {
+                Err("string contains non ascii letter characters")
+            }
             bytes => {
                 let array: [u8; 4] = bytes.try_into().unwrap();
                 Ok(Self(array))
             }
         }
     }
-}
-
-fn only_letters(bytes: &[u8]) -> bool {
-    for c in bytes {
-        if !(65..=90).contains(c) && !(97..=122).contains(c) {
-            return false;
-        }
-    }
-    true
 }
 
 impl fmt::Display for ChunkType {
@@ -53,12 +46,21 @@ impl fmt::Display for ChunkType {
     }
 }
 impl ChunkType {
-    fn bytes(&self) -> [u8; 4] {
+    fn only_letters(bytes: &[u8]) -> bool {
+        for c in bytes {
+            if !(65..=90).contains(c) && !(97..=122).contains(c) {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn bytes(&self) -> [u8; 4] {
         self.0
     }
 
     fn is_valid(&self) -> bool {
-        only_letters(&self.0) && self.is_reserved_bit_valid()
+        ChunkType::only_letters(&self.0) && self.is_reserved_bit_valid()
     }
 
     fn is_critical(&self) -> bool {
