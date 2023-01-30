@@ -5,7 +5,7 @@ use crc::{Crc, CRC_32_ISO_HDLC};
 use crate::chunk_type::ChunkType;
 use crate::{Error, Result};
 
-struct Chunk {
+pub struct Chunk {
     length: u32,
     chunk_type: ChunkType,
     data: Vec<u8>,
@@ -26,7 +26,7 @@ impl Chunk {
         CRC_GEN.checksum(&crc_data)
     }
 
-    fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
+    pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
         let length = data.len() as u32;
         let crc = Chunk::calc_crc(&chunk_type, &data);
 
@@ -37,15 +37,24 @@ impl Chunk {
             crc,
         }
     }
-    fn as_bytes(&self) -> Vec<u8> {
-        todo!();
+    pub fn as_bytes(&self) -> Vec<u8> {
+        let bytes: Vec<u8> = self
+            .length
+            .to_be_bytes()
+            .iter()
+            .chain(&self.chunk_type().bytes())
+            .chain(&self.data)
+            .chain(&self.crc().to_be_bytes())
+            .cloned()
+            .collect();
+        bytes
     }
 
     fn length(&self) -> u32 {
         self.length
     }
 
-    fn chunk_type(&self) -> &ChunkType {
+    pub fn chunk_type(&self) -> &ChunkType {
         &self.chunk_type
     }
 
@@ -57,7 +66,7 @@ impl Chunk {
         self.crc
     }
 
-    fn data_as_string(&self) -> Result<String> {
+    pub fn data_as_string(&self) -> Result<String> {
         // fix that shit
         String::from_utf8(self.data.clone()).map_err(Error::from)
     }
@@ -66,7 +75,13 @@ impl Chunk {
 impl Display for Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // add more information in here
-        write!(f, "Chunk type: {}", &self.chunk_type().to_string())
+        writeln!(f, "Chunk {{",)?;
+        writeln!(f, "  Length: {}", self.length())?;
+        writeln!(f, "  Type: {}", self.chunk_type())?;
+        writeln!(f, "  Data: {} bytes", self.data().len())?;
+        writeln!(f, "  Crc: {}", self.crc())?;
+        writeln!(f, "}}",)?;
+        Ok(())
     }
 }
 
@@ -74,7 +89,6 @@ impl TryFrom<&[u8]> for Chunk {
     type Error = &'static str;
     fn try_from(value: &[u8]) -> std::result::Result<Self, Self::Error> {
         // add error handaling for invalid chunks
-        // check if crc is good for chunk
 
         let (length_bytes, other) = value.split_at(4);
         let length = u32::from_be_bytes(length_bytes.try_into().unwrap());
@@ -106,7 +120,7 @@ mod tests {
     use crate::chunk_type::ChunkType;
     use std::str::FromStr;
 
-    fn testing_chunk() -> Chunk {
+    fn raw_testing_chunk() -> Vec<u8> {
         let data_length: u32 = 42;
         let chunk_type = "RuSt".as_bytes();
         let message_bytes = "This is where your secret message will be!".as_bytes();
@@ -121,6 +135,11 @@ mod tests {
             .copied()
             .collect();
 
+        chunk_data
+    }
+
+    fn testing_chunk() -> Chunk {
+        let chunk_data = raw_testing_chunk();
         Chunk::try_from(chunk_data.as_ref()).unwrap()
     }
 
@@ -136,9 +155,12 @@ mod tests {
     }
 
     #[test]
-    fn test_my_test() {
+    fn test_chunk_as_bytes() {
         let chunk = testing_chunk();
-        let iter = chunk.as_bytes();
+        let bytes = chunk.as_bytes();
+        let expected_chunk_bytes = raw_testing_chunk();
+
+        assert_eq!(bytes, expected_chunk_bytes);
     }
 
     #[test]
