@@ -1,10 +1,9 @@
 use std::fmt::Display;
-use std::slice::SliceIndex;
 
 use crc::{Crc, CRC_32_ISO_HDLC};
 
-use crate::chunk_type::{self, ChunkType};
-use crate::Result;
+use crate::chunk_type::ChunkType;
+use crate::{Error, Result};
 
 struct Chunk {
     length: u32,
@@ -38,6 +37,9 @@ impl Chunk {
             crc,
         }
     }
+    fn as_bytes(&self) -> Vec<u8> {
+        todo!();
+    }
 
     fn length(&self) -> u32 {
         self.length
@@ -56,17 +58,15 @@ impl Chunk {
     }
 
     fn data_as_string(&self) -> Result<String> {
-        todo!()
-    }
-
-    fn as_bytes(&self) -> Vec<u8> {
-        todo!()
+        // fix that shit
+        String::from_utf8(self.data.clone()).map_err(Error::from)
     }
 }
 
 impl Display for Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        // add more information in here
+        write!(f, "Chunk type: {}", &self.chunk_type().to_string())
     }
 }
 
@@ -133,6 +133,12 @@ mod tests {
         let chunk = Chunk::new(chunk_type, data);
         assert_eq!(chunk.length(), 42);
         assert_eq!(chunk.crc(), 2882656334);
+    }
+
+    #[test]
+    fn test_my_test() {
+        let chunk = testing_chunk();
+        let iter = chunk.as_bytes();
     }
 
     #[test]
