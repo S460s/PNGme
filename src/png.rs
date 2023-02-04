@@ -16,7 +16,7 @@ impl Png {
     }
 
     fn append_chunk(&mut self, chunk: Chunk) {
-        todo!()
+        self.chunks.push(chunk);
     }
 
     fn remove_chunk(&mut self, chunk_type: &str) -> Result<Chunk> {
@@ -32,7 +32,9 @@ impl Png {
     }
 
     fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
-        todo!()
+        self.chunks
+            .iter()
+            .find(|chunk| chunk.chunk_type().to_string() == chunk_type)
     }
 
     fn as_bytes(&self) -> Vec<u8> {
