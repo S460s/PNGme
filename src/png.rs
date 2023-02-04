@@ -24,7 +24,7 @@ impl Png {
     }
 
     fn header(&self) -> &[u8; 8] {
-        todo!()
+        &Self::STANDARD_HEADER
     }
 
     fn chunks(&self) -> &[Chunk] {
