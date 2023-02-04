@@ -54,8 +54,15 @@ fn main() -> Result<()> {
             file_path,
             chunk_type,
         } => {
-            let file = fs::read(file_path)?;
-            let mut png = Png::try_from(file.as_slice())?;
+            let mut file = File::options()
+                .write(true)
+                .read(true)
+                .create(true)
+                .open(file_path)?;
+
+            let mut bytes = Vec::new();
+            file.read_to_end(&mut bytes)?;
+            let mut png = Png::try_from(bytes.as_ref())?;
 
             if let Ok(chunk) = png.remove_chunk(chunk_type) {
                 println!("Removed chunk:\n\n {chunk}");
