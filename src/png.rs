@@ -19,7 +19,9 @@ impl Png {
         self.chunks.push(chunk);
     }
 
-    fn remove_chunk(&mut self, chunk_type: &str) -> Result<Chunk> {
+    // add append_chunk which will add at random place of the file
+
+    pub fn remove_chunk(&mut self, chunk_type: &str) -> Result<Chunk> {
         let index = self
             .chunks()
             .iter()
@@ -43,7 +45,7 @@ impl Png {
             .find(|chunk| chunk.chunk_type().to_string() == chunk_type)
     }
 
-    fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self) -> Vec<u8> {
         Self::STANDARD_HEADER
             .iter()
             .cloned()
@@ -90,6 +92,8 @@ impl TryFrom<&[u8]> for Png {
         let (mut first, mut other) = chunks.split_at(length.try_into().unwrap());
         loop {
             let chunk = Chunk::try_from(first)?;
+            println!("\n{chunk}\n");
+            println!("\nother length {}\n", other.len());
             png.chunks.push(chunk);
             if other.is_empty() {
                 break;

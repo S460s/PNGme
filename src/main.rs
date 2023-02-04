@@ -8,7 +8,7 @@ pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
 
 use std::fs::{self, File};
-use std::io::{Read, Write};
+use std::io::{BufReader, Read, Write};
 use std::str::FromStr;
 
 use args::{Commands, CLI};
@@ -47,14 +47,22 @@ fn main() -> Result<()> {
                 .chunk_by_type(chunk_type)
                 .ok_or("no such chunk in the specified file")?;
 
-            println!("Message -> {}", chunk.data_as_string()?);
+            println!("{}", chunk.data_as_string()?);
         }
 
         Commands::Remove {
             file_path,
             chunk_type,
         } => {
-            todo!()
+            let file = fs::read(file_path)?;
+            let mut png = Png::try_from(file.as_slice())?;
+
+            if let Ok(chunk) = png.remove_chunk(chunk_type) {
+                println!("Removed chunk:\n\n {chunk}");
+                // file.write(png.as_bytes().as_ref());
+            } else {
+                println!("no such chunk in the specified file")
+            };
         }
 
         Commands::Print { file_path } => {
