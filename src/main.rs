@@ -58,7 +58,7 @@ fn main() -> Result<()> {
 
             if let Ok(chunk) = png.remove_chunk(chunk_type) {
                 println!("Removed chunk:\n\n {chunk}");
-                let mut file = File::options().write(true).create(true).open("test.png")?;
+                let mut file = File::options().write(true).truncate(true).open(file_path)?;
                 file.write(png.as_bytes().as_ref())?;
             } else {
                 println!("no such chunk in the specified file")
