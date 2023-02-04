@@ -8,7 +8,7 @@ pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
 
 use std::fs::{self, File};
-use std::io::{BufReader, Read, Write};
+use std::io::Write;
 use std::str::FromStr;
 
 use args::{Commands, CLI};
@@ -27,12 +27,14 @@ fn main() -> Result<()> {
             file_path,
             chunk_type,
         } => {
+            let file = fs::read(file_path)?;
+            let mut png = Png::try_from(file.as_slice())?;
             let chunk_type = ChunkType::from_str(chunk_type)?;
             let chunk = Chunk::new(chunk_type, message.as_bytes().to_vec());
-            let mut file = File::options().append(true).open(file_path)?;
-            let res = file.write(chunk.as_bytes().as_ref())?;
+            png.append_chunk(chunk);
 
-            println!("{res} bytes written to {file_path:?} successfully");
+            let mut file = File::options().write(true).truncate(true).open(file_path)?;
+            file.write(png.as_bytes().as_ref())?;
         }
 
         Commands::Decode {
@@ -53,6 +55,7 @@ fn main() -> Result<()> {
             file_path,
             chunk_type,
         } => {
+            // look into file reading and writing
             let file = fs::read(file_path)?;
             let mut png = Png::try_from(file.as_slice())?;
 
