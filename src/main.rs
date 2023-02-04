@@ -7,8 +7,8 @@ mod png;
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
 
-use std::fs::File;
-use std::io::Write;
+use std::fs::{self, File};
+use std::io::{Read, Write};
 use std::str::FromStr;
 
 use args::{Commands, CLI};
@@ -16,6 +16,7 @@ use clap::Parser;
 
 use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
+use crate::png::Png;
 
 fn main() -> Result<()> {
     let cli = CLI::parse();
@@ -39,7 +40,14 @@ fn main() -> Result<()> {
             file_path,
             chunk_type,
         } => {
-            todo!()
+            let file = fs::read(file_path)?;
+            let png = Png::try_from(file.as_slice())?;
+
+            let chunk = png
+                .chunk_by_type(chunk_type)
+                .ok_or("no such chunk in the specified file")?;
+
+            println!("Message -> {}", chunk.data_as_string()?);
         }
 
         Commands::Remove {
