@@ -29,7 +29,6 @@ fn main() -> Result<()> {
         } => {
             let chunk_type = ChunkType::from_str(chunk_type)?;
             let chunk = Chunk::new(chunk_type, message.as_bytes().to_vec());
-
             let mut file = File::options().append(true).open(file_path)?;
             let res = file.write(chunk.as_bytes().as_ref())?;
 
@@ -54,26 +53,23 @@ fn main() -> Result<()> {
             file_path,
             chunk_type,
         } => {
-            let mut file = File::options()
-                .write(true)
-                .read(true)
-                .create(true)
-                .open(file_path)?;
-
-            let mut bytes = Vec::new();
-            file.read_to_end(&mut bytes)?;
-            let mut png = Png::try_from(bytes.as_ref())?;
+            let file = fs::read(file_path)?;
+            let mut png = Png::try_from(file.as_slice())?;
 
             if let Ok(chunk) = png.remove_chunk(chunk_type) {
                 println!("Removed chunk:\n\n {chunk}");
-                // file.write(png.as_bytes().as_ref());
+                let mut file = File::options().write(true).create(true).open("test.png")?;
+                file.write(png.as_bytes().as_ref())?;
             } else {
                 println!("no such chunk in the specified file")
             };
         }
 
         Commands::Print { file_path } => {
-            todo!()
+            let file = fs::read(file_path)?;
+            let png = Png::try_from(file.as_slice())?;
+
+            println!("{png}")
         }
         Commands::Banner => {
             println!(

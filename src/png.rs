@@ -15,8 +15,10 @@ impl Png {
         Png { chunks }
     }
 
-    fn append_chunk(&mut self, chunk: Chunk) {
-        self.chunks.push(chunk);
+    pub fn append_chunk(&mut self, chunk: Chunk) {
+        // don't append at the end as it's after the IEND chunk
+        // self.chunks.push(chunk);
+        self.chunks.insert(self.chunks.len() - 1, chunk);
     }
 
     // add append_chunk which will add at random place of the file
@@ -92,8 +94,6 @@ impl TryFrom<&[u8]> for Png {
         let (mut first, mut other) = chunks.split_at(length.try_into().unwrap());
         loop {
             let chunk = Chunk::try_from(first)?;
-            println!("\n{chunk}\n");
-            println!("\nother length {}\n", other.len());
             png.chunks.push(chunk);
             if other.is_empty() {
                 break;
