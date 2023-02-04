@@ -46,30 +46,39 @@ impl Display for Png {
     }
 }
 
+mod util {
+    use super::Result;
+    pub fn calc_length(chunk: &[u8]) -> Result<u32> {
+        // first 4 bytes contain the length of the DATA segment of the PNG chunk
+        let length_slice: [u8; 4] = chunk[..4].try_into()?;
+        // data length + 4 bytes length + 4 bytes chunk type + 4 bytes crc
+        let length = u32::from_be_bytes(length_slice) + 4 * 3;
+        Ok(length)
+    }
+}
+
 impl TryFrom<&[u8]> for Png {
-    // look into error handaling
     type Error = Error;
     fn try_from(value: &[u8]) -> std::result::Result<Self, Self::Error> {
+        // NOTE: Improve error handaling
         let mut png = Self { chunks: Vec::new() };
 
+        // first 8 bytes contain the PNG header
         let (header, chunks) = value.split_at(8);
 
         if header != Png::STANDARD_HEADER {
             return Err(Error::from("invalid chunk headers"));
         }
 
-        let length_slice: [u8; 4] = chunks[..4].try_into()?;
-        let length = u32::from_be_bytes(length_slice) + 4 * 3;
-
+        let length = util::calc_length(chunks)?;
         let (mut first, mut other) = chunks.split_at(length.try_into().unwrap());
         loop {
-            let chunk = Chunk::try_from(first).unwrap();
+            let chunk = Chunk::try_from(first)?;
             png.chunks.push(chunk);
             if other.is_empty() {
                 break;
             }
-            let length_slice: [u8; 4] = other[..4].try_into()?;
-            let length = u32::from_be_bytes(length_slice) + 4 * 3;
+            let length = util::calc_length(other)?;
             (first, other) = other.split_at(length.try_into().unwrap());
         }
 
