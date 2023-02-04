@@ -4,13 +4,13 @@ use clap::{Parser, Subcommand};
 #[command(about = "A CLI to encode and decode information from and into PNG files. Made by following this project tutorial -> https://picklenerd.github.io/pngme_book/introduction.html", long_about = None)]
 #[command(author = "S460")]
 #[command(version = "1.0")]
-pub struct Args {
+pub struct CLI {
     #[command(subcommand)]
-    command: Commands,
+    pub command: Commands,
 }
 
 #[derive(Subcommand, Debug)]
-enum Commands {
+pub enum Commands {
     /// encode message into file
     Encode {
         /// message to encode into the PNG file
