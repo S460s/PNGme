@@ -42,7 +42,11 @@ impl Png {
 
 impl Display for Png {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        for chunk in self.chunks() {
+            writeln!(f, "{}", chunk)?;
+        }
+
+        Ok(())
     }
 }
 

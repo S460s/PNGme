@@ -67,7 +67,6 @@ impl Chunk {
     }
 
     pub fn data_as_string(&self) -> Result<String> {
-        // fix that shit
         String::from_utf8(self.data.clone()).map_err(Error::from)
     }
 }
