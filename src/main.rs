@@ -1,4 +1,4 @@
-// mod args;
+mod args;
 mod chunk;
 mod chunk_type;
 // mod commands;
@@ -7,7 +7,11 @@ mod png;
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
 
+use args::Args;
+use clap::Parser;
+
 fn main() -> Result<()> {
-    println!("Hello, world!");
+    let args = Args::parse();
+
     Ok(())
 }

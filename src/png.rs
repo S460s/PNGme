@@ -20,7 +20,13 @@ impl Png {
     }
 
     fn remove_chunk(&mut self, chunk_type: &str) -> Result<Chunk> {
-        todo!()
+        let index = self
+            .chunks()
+            .iter()
+            .position(|chunk| chunk.chunk_type().to_string() == chunk_type)
+            .ok_or("no chunk with chunk_type {chunk_type} in png")?;
+
+        Ok(self.chunks.remove(index))
     }
 
     fn header(&self) -> &[u8; 8] {
@@ -38,7 +44,11 @@ impl Png {
     }
 
     fn as_bytes(&self) -> Vec<u8> {
-        todo!()
+        Self::STANDARD_HEADER
+            .iter()
+            .cloned()
+            .chain(self.chunks.iter().flat_map(|chunk| chunk.as_bytes()))
+            .collect()
     }
 }
 
