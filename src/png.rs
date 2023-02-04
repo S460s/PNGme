@@ -50,9 +50,7 @@ impl TryFrom<&[u8]> for Png {
     // look into error handaling
     type Error = Error;
     fn try_from(value: &[u8]) -> std::result::Result<Self, Self::Error> {
-        // add checks to see if plit is possible
-
-        let png = Self { chunks: Vec::new() };
+        let mut png = Self { chunks: Vec::new() };
 
         let (header, chunks) = value.split_at(8);
 
@@ -63,14 +61,19 @@ impl TryFrom<&[u8]> for Png {
         let length_slice: [u8; 4] = chunks[..4].try_into()?;
         let length = u32::from_be_bytes(length_slice) + 4 * 3;
 
-        // PoC works, finish it later (make another function, use iteration?)
-        let (first, other) = chunks.split_at(length.try_into().unwrap());
-        println!("{first:?}");
-        let chunk = Chunk::try_from(first).unwrap();
+        let (mut first, mut other) = chunks.split_at(length.try_into().unwrap());
+        loop {
+            let chunk = Chunk::try_from(first).unwrap();
+            png.chunks.push(chunk);
+            if other.is_empty() {
+                break;
+            }
+            let length_slice: [u8; 4] = other[..4].try_into()?;
+            let length = u32::from_be_bytes(length_slice) + 4 * 3;
+            (first, other) = other.split_at(length.try_into().unwrap());
+        }
 
-        println!("{chunk}");
-
-        todo!()
+        Ok(png)
     }
 }
 
