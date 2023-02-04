@@ -1,14 +1,18 @@
 use std::fmt::Display;
 
+// QUESTION: implement first and last specific chunks?
+
 use crate::chunk::Chunk;
-use crate::Result;
-pub struct Png {}
+use crate::{Error, Result};
+pub struct Png {
+    chunks: Vec<Chunk>,
+}
 
 impl Png {
     const STANDARD_HEADER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 
     fn from_chunks(chunks: Vec<Chunk>) -> Self {
-        todo!()
+        Png { chunks }
     }
 
     fn append_chunk(&mut self, chunk: Chunk) {
@@ -24,7 +28,7 @@ impl Png {
     }
 
     fn chunks(&self) -> &[Chunk] {
-        todo!()
+        &self.chunks
     }
 
     fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
@@ -43,8 +47,29 @@ impl Display for Png {
 }
 
 impl TryFrom<&[u8]> for Png {
-    type Error = &'static str;
+    // look into error handaling
+    type Error = Error;
     fn try_from(value: &[u8]) -> std::result::Result<Self, Self::Error> {
+        // add checks to see if plit is possible
+
+        let png = Self { chunks: Vec::new() };
+
+        let (header, chunks) = value.split_at(8);
+
+        if header != Png::STANDARD_HEADER {
+            return Err(Error::from("invalid chunk headers"));
+        }
+
+        let length_slice: [u8; 4] = chunks[..4].try_into()?;
+        let length = u32::from_be_bytes(length_slice) + 4 * 3;
+
+        // PoC works, finish it later (make another function, use iteration?)
+        let (first, other) = chunks.split_at(length.try_into().unwrap());
+        println!("{first:?}");
+        let chunk = Chunk::try_from(first).unwrap();
+
+        println!("{chunk}");
+
         todo!()
     }
 }
